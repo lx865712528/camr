@@ -118,7 +118,7 @@ def convert_to_entities(json_sentences):
                 if previous_label != "O":
                     eid = len(entities)
                     forms = [x["form"] for x in sentence[previous_start:index]]
-                    lemmas = [x["lemma"].tolower() for x in sentence[previous_start:index]]
+                    lemmas = [x["lemma"].lower() for x in sentence[previous_start:index]]
                     head_index = find_head(lemmas)
                     entities.append({
                         "id": eid,
@@ -126,7 +126,7 @@ def convert_to_entities(json_sentences):
                         "startIndex": previous_start,
                         "endIndex": index,
                         "text": forms,
-                        "headIndex": head_index,
+                        "headIndex": head_index + previous_start,
                         "sentNum": sid,
                         "headWord": forms[head_index],
                     })
@@ -141,7 +141,7 @@ def convert_to_entities(json_sentences):
                 else:
                     eid = len(entities)
                     forms = [x["form"] for x in sentence[previous_start:index]]
-                    lemmas = [x["lemma"].tolower() for x in sentence[previous_start:index]]
+                    lemmas = [x["lemma"].lower() for x in sentence[previous_start:index]]
                     head_index = find_head(lemmas)
                     entities.append({
                         "id": eid,
@@ -149,7 +149,7 @@ def convert_to_entities(json_sentences):
                         "startIndex": previous_start,
                         "endIndex": index,
                         "text": forms,
-                        "headIndex": head_index,
+                        "headIndex": head_index + previous_start,
                         "sentNum": sid,
                         "headWord": forms[head_index],
                     })
@@ -159,7 +159,7 @@ def convert_to_entities(json_sentences):
         if not previous_label == "O":
             eid = len(entities)
             forms = [x["form"] for x in sentence[previous_start:]]
-            lemmas = [x["lemma"].tolower() for x in sentence[previous_start:]]
+            lemmas = [x["lemma"].lower() for x in sentence[previous_start:]]
             head_index = find_head(lemmas)
             entities.append({
                 "id": eid,
@@ -167,7 +167,7 @@ def convert_to_entities(json_sentences):
                 "startIndex": previous_start,
                 "endIndex": len(sentence),
                 "text": forms,
-                "headIndex": head_index,
+                "headIndex": head_index + previous_start,
                 "sentNum": sid,
                 "headWord": forms[head_index],
             })
@@ -177,7 +177,7 @@ def convert_to_entities(json_sentences):
 def convert_to_corefs(json_entities):
     corefs = {}
     for entity in json_entities:
-        head_word = entity["headword"]
+        head_word = entity["headWord"].lower()
         if head_word not in corefs:
             corefs[head_word] = []
         corefs[head_word].append(entity)
@@ -267,11 +267,10 @@ def load_amr(fp):
 
 def merge_json_amr(parsed_json, amr_graphs):
     # get a chain
-    for key, coref in parsed_json["corefs"].items():
+    for coref in parsed_json["corefs"]:
         # get an entity mention
         for entity in coref:
-            # todo check whether sentNum is right
-            tokens = parsed_json["sentences"][entity["sentNum"]]["tokens"]
+            tokens = parsed_json["sentences"][entity["sentNum"]]
             graph = amr_graphs[entity["sentNum"]]
             start_index = entity["startIndex"]
             end_index = entity["endIndex"]
@@ -288,7 +287,7 @@ def merge_json_amr(parsed_json, amr_graphs):
                     father = graph.fathers[pos]
                     if father == -1:
                         father = pos
-                    entity["predicate"] = tokens[father]["word"]
+                    entity["predicate"] = tokens[father]["form"]
                     entity["predicateFrame"] = graph.attributes[father]
                     entity["selfFrame"] = graph.attributes[pos]
                     entity["predicate_relation"] = graph.roles[pos]
@@ -296,6 +295,8 @@ def merge_json_amr(parsed_json, amr_graphs):
 
 
 def generate_merge_json(INPUT_DIR):
+    constants.FLAG_ONTO = "wsj"
+    constants.FLAG_DEPPARSER = "stdconv+charniak"
     for fn in os.listdir(INPUT_DIR):
         if not fn.endswith(".txt"):
             continue
@@ -312,10 +313,10 @@ def generate_merge_json(INPUT_DIR):
             "sentences": json_sentences,
             "corefs": json_corefs,
         }
-        with codecs.open(fn + ".all.model.parsed", "r", encoding="utf-8") as f:
+        with codecs.open(single_file + ".all.model.parsed", "r", encoding="utf-8") as f:
             amr_graphs = load_amr(f)
         merge_json_amr(parsed_json, amr_graphs)
-        with codecs.open(fn + ".json", "w", encoding="utf-8") as f:
+        with codecs.open(single_file + ".json", "w", encoding="utf-8") as f:
             json.dump(parsed_json, f, ensure_ascii=False)
 
 
@@ -325,35 +326,42 @@ if __name__ == "__main__":
         print("We should be under camr/")
         sys.exit(-1)
     # get necessary arguments from CLI
-    if len(sys.argv) != 4:
-        print("PYTHON2 odee_preprocess.py ODEE_CORPUS_DIR OUTPUT_DIR AMR_MODEL")
+    if len(sys.argv) != 6:
+        print("PYTHON2 odee_preprocess.py ODEE_CORPUS_DIR OUTPUT_DIR AMR_MODEL ST_STEP ED_STEP")
         sys.exit(-1)
-    ODEE_CORPUS_DIR, OUTPUT_DIR, AMR_MODEL = sys.argv[1], sys.argv[2], sys.argv[3]
+    ODEE_CORPUS_DIR, OUTPUT_DIR, AMR_MODEL, ST_STEP, ED_STEP = sys.argv[1], \
+                                                               sys.argv[2], \
+                                                               sys.argv[3], \
+                                                               int(sys.argv[4]), \
+                                                               int(sys.argv[5])
     if not os.path.exists(OUTPUT_DIR):
         os.mkdir(OUTPUT_DIR)
 
     # step 1 extract raw text
-    print("Step 1 start.")
-    for file_path in input_queue(ODEE_CORPUS_DIR):
-        print("Processing %s" % file_path)
-        names, contents = process_it(file_path, TEXT_MAXLEN=600)
-        for name, content in zip(names, contents):
-            # dump raw texts
-            raw_output_path = os.path.join(OUTPUT_DIR, name + ".txt")
-            with codecs.open(raw_output_path, "w", encoding="utf-8") as f:
-                for line in content:
-                    f.write(line.strip() + "\n")
-    print("Step 1 done.\n\n\n\n")
+    if ST_STEP <= 1 and 1 <= ED_STEP:
+        print("Step 1 start.")
+        for file_path in input_queue(ODEE_CORPUS_DIR):
+            print("Processing %s" % file_path)
+            names, contents = process_it(file_path, TEXT_MAXLEN=600)
+            for name, content in zip(names, contents):
+                # dump raw texts
+                raw_output_path = os.path.join(OUTPUT_DIR, name + ".txt")
+                with codecs.open(raw_output_path, "w", encoding="utf-8") as f:
+                    for line in content:
+                        f.write(line.strip() + "\n")
+        print("Step 1 done.\n\n\n\n")
 
     # step 2 run stanford and camr parser
-    print("Step 2 start.")
-    preprocess_stanford_and_camr(OUTPUT_DIR, AMR_MODEL)
-    print("Step 2 done.\n\n\n\n")
+    if ST_STEP <= 2 and 2 <= ED_STEP:
+        print("Step 2 start.")
+        preprocess_stanford_and_camr(OUTPUT_DIR, AMR_MODEL)
+        print("Step 2 done.\n\n\n\n")
 
     # step 3 generate, clean and merge amr into json
-    print("Step 3 start.")
-    generate_merge_json(OUTPUT_DIR)
-    print("Step 3 done.\n\n\n\n")
+    if ST_STEP <= 3 and 3 <= ED_STEP:
+        print("Step 3 start.")
+        generate_merge_json(OUTPUT_DIR)
+        print("Step 3 done.\n\n\n\n")
 
     # finish
     print("Done!")
