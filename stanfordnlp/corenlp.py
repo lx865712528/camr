@@ -27,7 +27,7 @@ from nltk.tree import Tree
 import re
 from data import Data
 
-VERBOSE = True
+VERBOSE = False
 STATE_START, STATE_TEXT, STATE_WORDS, STATE_TREE, STATE_DEPENDENCY, STATE_COREFERENCE, STATE_SENT_ERROR, STATE_TEXT_ERROR, STATE_WORD_ERROR = 0, 1, 2, 3, 4, 5, 6, 7, 8
 WORD_PATTERN = re.compile('\[([^\]]+)\]')
 WORD_ERROR_PATTERN = re.compile('\[([^\]]+)')

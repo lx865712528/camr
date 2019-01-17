@@ -6,6 +6,7 @@ __pycache__/
 *.so
 data/
 models/
+sample/
 # Distribution / packaging
 .Python
 env/

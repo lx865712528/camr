@@ -30,14 +30,14 @@ class CharniakParser(DepParser):
         self.rrp = RerankingParser.from_unified_model_dir(path_to_model)
     
     def parse(self,sent_filename):
-        print "Begin Charniak parsing ..."
+        # print "Begin Charniak parsing ..."
         parsed_filename = sent_filename+'.charniak.parse'
         parsed_trees = ''
         lineno = 0
         with open(sent_filename,'r') as f, open(parsed_filename,'w') as of:
             for l in f:
                 lineno += 1
-                print >> logs, 'lineno %s, %s'% (lineno, l)
+                # print >> logs, 'lineno %s, %s'% (lineno, l)
                 try:
                     parsed_trees = self.rrp.simple_parse(l.strip().split())
                 except IndexError:
@@ -48,7 +48,7 @@ class CharniakParser(DepParser):
 
         
         # convert parse tree to dependency tree
-        print "Convert Charniak parse tree to Stanford Dependency tree ..."
+        # print "Convert Charniak parse tree to Stanford Dependency tree ..."
         subprocess.call('./scripts/stdconvert.sh '+parsed_filename,shell=True)
         
 

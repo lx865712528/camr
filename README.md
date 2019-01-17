@@ -1,6 +1,14 @@
 CAMR: A transition-based AMR Parser
 ==========
 
+### What I Updated for X?
+After several versions of preprocessing, I realized that the easiest way it to embed my own preprocessing in CAMR.
+While the original version of calling stanford corenlp under the camr package is relatively slow, we had to also modified it to save time.
+
+balabalabala
+
+### Below is Previous Description
+
 CAMR is a transition-based, tree-to-graph parser for the [Abstract Meaning Representation](http://amr.isi.edu/) of a sentence. It is a product of an on-going collaboration between the [Chinese Language Processing Group](http://www.cs.brandeis.edu/~clp/Lab/Home.html) at Brandeis University and [`cemantix.org`](http://cemantix.org)
 
 Reference:

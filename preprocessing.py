@@ -428,7 +428,6 @@ def preprocess(input_file,START_SNLP=True,INPUT_AMR='amr',PRP_FORMAT='plain',pro
             tmp_prp_filename = tmp_sent_filename+'.prp'
 
             if proc1 is None:
-                print("bad proc1")
                 proc1 = StanfordCoreNLP()
                 if START_SNLP and not os.path.exists(tmp_prp_filename):
                     print >> log, "Start Stanford CoreNLP..."
