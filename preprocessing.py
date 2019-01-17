@@ -316,7 +316,7 @@ def load_xml_instances(input_xml):
 
     return instances
             
-def preprocess(input_file,START_SNLP=True,INPUT_AMR='amr',PRP_FORMAT='plain'):
+def preprocess(input_file,START_SNLP=True,INPUT_AMR='amr',PRP_FORMAT='plain',proc1=None, dparser=None):
     '''nasty function'''
     tmp_sent_filename = None
     instances = None
@@ -342,14 +342,14 @@ def preprocess(input_file,START_SNLP=True,INPUT_AMR='amr',PRP_FORMAT='plain'):
         if PRP_FORMAT == 'plain':
             tmp_prp_filename = tmp_sent_filename+'.prp'
             
-            
-            proc1 = StanfordCoreNLP()
+            if proc1 is None:
+                print("Bad proc1")
+                proc1 = StanfordCoreNLP()
+                if START_SNLP and not os.path.exists(tmp_prp_filename):
+                    print >> log, "Start Stanford CoreNLP..."
+                    proc1.setup()
 
             # preprocess 1: tokenization, POS tagging and name entity using Stanford CoreNLP
-
-            if START_SNLP and not os.path.exists(tmp_prp_filename):
-                print >> log, "Start Stanford CoreNLP..."
-                proc1.setup()
 
             print >> log, 'Read token,lemma,name entity file %s...' % (tmp_prp_filename)            
             instances = proc1.parse(tmp_sent_filename)
@@ -427,13 +427,14 @@ def preprocess(input_file,START_SNLP=True,INPUT_AMR='amr',PRP_FORMAT='plain'):
         if PRP_FORMAT == 'plain':
             tmp_prp_filename = tmp_sent_filename+'.prp'
 
-            proc1 = StanfordCoreNLP()
+            if proc1 is None:
+                print("bad proc1")
+                proc1 = StanfordCoreNLP()
+                if START_SNLP and not os.path.exists(tmp_prp_filename):
+                    print >> log, "Start Stanford CoreNLP..."
+                    proc1.setup()
 
             # preprocess 1: tokenization, POS tagging and name entity using Stanford CoreNLP
-
-            if START_SNLP and not os.path.exists(tmp_prp_filename):
-                print >> log, "Start Stanford CoreNLP..."
-                proc1.setup()
 
             print >> log, 'Read token,lemma,name entity file %s...' % (tmp_prp_filename)            
             instances = proc1.parse(tmp_sent_filename)
@@ -500,7 +501,9 @@ def preprocess(input_file,START_SNLP=True,INPUT_AMR='amr',PRP_FORMAT='plain'):
         else:
             dep_filename = tok_sent_filename+'.charniak.parse.dep'            
         if not os.path.exists(dep_filename):
-            dparser = CharniakParser()
+            if dparser is None:
+                print("bad dparser")
+                dparser = CharniakParser()
             dparser.parse(tok_sent_filename)
             #raise IOError('Converted dependency file %s not founded' % (dep_filename))
         print 'Read dependency file %s...' % (dep_filename)

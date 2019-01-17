@@ -16,8 +16,7 @@ class DepParser(object):
 
 
 class CharniakParser(DepParser):
-    
-    def parse(self,sent_filename):
+    def __init__(self):
         """
         use Charniak parser to parse sentences then convert results to Stanford Dependency
         """
@@ -28,7 +27,9 @@ class CharniakParser(DepParser):
         model_type = 'WSJ+Gigaword'
         path_to_model = download_and_install_model(model_type,'./bllip-parser/models')
         print "Loading Charniak parser model: %s ..." % (model_type)
-        rrp = RerankingParser.from_unified_model_dir(path_to_model)
+        self.rrp = RerankingParser.from_unified_model_dir(path_to_model)
+    
+    def parse(self,sent_filename):
         print "Begin Charniak parsing ..."
         parsed_filename = sent_filename+'.charniak.parse'
         parsed_trees = ''
@@ -38,9 +39,9 @@ class CharniakParser(DepParser):
                 lineno += 1
                 print >> logs, 'lineno %s, %s'% (lineno, l)
                 try:
-                    parsed_trees = rrp.simple_parse(l.strip().split())
+                    parsed_trees = self.rrp.simple_parse(l.strip().split())
                 except IndexError:
-                    parsed_trees = rrp.simple_parse(l.strip().split()[:64])
+                    parsed_trees = self.rrp.simple_parse(l.strip().split()[:64])
                     
                 parsed_trees += '\n'
                 of.write(parsed_trees)

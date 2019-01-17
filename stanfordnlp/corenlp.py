@@ -348,7 +348,7 @@ class StanfordCoreNLP(object):
 
         #Change from ':' to ';'
         # spawn the server
-        start_corenlp = "%s -Xmx2500m -cp %s %s %s" % (java_path, ':'.join(jars), classname, props)
+        start_corenlp = "%s -Xmx8g -cp %s %s %s" % (java_path, ':'.join(jars), classname, props)
         if VERBOSE: print start_corenlp
         self.corenlp = pexpect.spawn(start_corenlp)
         
