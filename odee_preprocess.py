@@ -62,22 +62,25 @@ def preprocess_stanford_and_camr(INPUT_DIR, MODEL_FILE):
         if not single_file.endswith(".txt"):
             continue
         single_file = os.path.join(INPUT_DIR, single_file)
-        print("Processing %s" % single_file)
-        # stanford corenlp
-        preprocess(single_file,
-                   START_SNLP=True,
-                   INPUT_AMR="sent",
-                   PRP_FORMAT="plain",
-                   proc1=annotator,
-                   dparser=dparser)
-        # camr
-        test_instances = preprocess(single_file,
-                                    START_SNLP=False,
-                                    INPUT_AMR="sent",
-                                    PRP_FORMAT="plain")
-        span_graph_pairs, results = parser.parse_corpus_test(test_instances)
-        parsed_suffix = '%s.%s.parsed' % ("all", "model")
-        write_parsed_amr(results, test_instances, single_file, suffix=parsed_suffix)
+        if os.path.exists(single_file + ".prp"):
+            print("Skipping %s" % single_file)
+        else:
+            print("Processing %s" % single_file)
+            # stanford corenlp
+            preprocess(single_file,
+                       START_SNLP=True,
+                       INPUT_AMR="sent",
+                       PRP_FORMAT="plain",
+                       proc1=annotator,
+                       dparser=dparser)
+            # camr
+            test_instances = preprocess(single_file,
+                                        START_SNLP=False,
+                                        INPUT_AMR="sent",
+                                        PRP_FORMAT="plain")
+            span_graph_pairs, results = parser.parse_corpus_test(test_instances)
+            parsed_suffix = '%s.%s.parsed' % ("all", "model")
+            write_parsed_amr(results, test_instances, single_file, suffix=parsed_suffix)
 
 
 # for step 3
